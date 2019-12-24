@@ -1,0 +1,4 @@
+venv
+.spyproject
+*.swp
+*.pyc
