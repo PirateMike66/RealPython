@@ -4,6 +4,7 @@ from functools import wraps
 from flask import Flask, flash, redirect, render_template, \
     request, session, url_for
 from flask_sqlalchemy import SQLAlchemy
+import datetime
 
 # config
 
@@ -30,6 +31,7 @@ def login_required(test):
 @app.route('/logout/')
 def logout():
     session.pop('logged_in', None)
+    session.pop('user_id', None)
     flash('Goodbye!')
     return redirect(url_for('login'))
 
@@ -43,6 +45,7 @@ def login():
             user = User.query.filter_by(name=request.form['name']).first()
             if user is not None and user.password == request.form['password']:
                 session['logged_in'] = True
+                session['user_id'] = user.id
                 flash('Welcome')
                 return redirect(url_for('tasks'))
             else:
@@ -76,11 +79,16 @@ def new_task():
     if request.method == 'POST':
         if form.validate_on_submit():
             new_task = Task(form.name.data, form.due_date.data,
-                            form.priority.data, '1')
+                            form.priority.data, datetime.datetime.utcnow(),
+                            '1', session['user_id'])
             db.session.add(new_task)
             db.session.commit()
             flash('New entry successfully poated.')
-    return redirect(url_for('tasks'))
+            return redirect(url_for('tasks'))
+        else:
+            flash('All fields required.')
+            return redirect(url_for('tasks'))
+    return render_template('tasks.html', form=form)
 
 
 # Mark tasks as complete
@@ -89,6 +97,7 @@ def new_task():
 def complete(task_id):
     new_id = task_id
     db.session.query(Task).filter_by(task_id=new_id).update({"status": "0"})
+    db.session.commit()
     flash('The task is complete. Nice!')
     return redirect(url_for('tasks'))
 
