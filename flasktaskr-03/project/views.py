@@ -53,6 +53,7 @@ def closed_tasks():
 
 
 @app.route('/logout/')
+@login_required
 def logout():
     session.pop('logged_in', None)
     session.pop('user_id', None)
@@ -70,7 +71,7 @@ def login():
             if user is not None and user.password == request.form['password']:
                 session['logged_in'] = True
                 session['user_id'] = user.id
-                flash('Welcome')
+                flash('Welcome!')
                 return redirect(url_for('tasks'))
             else:
                 error = 'Invalid username or password.'
@@ -100,7 +101,7 @@ def new_task():
                             '1', session['user_id'])
             db.session.add(new_task)
             db.session.commit()
-            flash('New entry successfully poated.')
+            flash('New entry successfully posted.')
             return redirect(url_for('tasks'))
         else:
             return render_template('tasks.html', form=form, error=error,
@@ -146,10 +147,10 @@ def register():
             try:
                 db.session.add(new_user)
                 db.session.commit()
-                flash('Thanks for registering. Please Login.')
+                flash('Thanks for registering. Please login.')
                 return redirect(url_for('login'))
             except IntegrityError:
-                error = 'That username and/or email already exists.'
+                error = 'That username and/or email already exist.'
                 return render_template('register.html', form=form,
                                        error=error)
     return render_template('register.html', form=form, error=error)
